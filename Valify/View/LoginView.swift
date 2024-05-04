@@ -9,27 +9,27 @@ import SwiftUI
 import AuthenticationServices
 import Auth
 
-class SignInViewModel: ObservableObject {
+//class SignInViewModel: ObservableObject {
     
-    let signInApple = SignInApple()
+//    let signInApple = SignInApple()
     
-    func signIn() async throws {
-        signInApple.startSignInWithAppleFlow { result in
-            switch result {
-            case .success(let appleResult):
-                Task {
-                    try await signInWithApple(idToken: appleResult.idToken, nonce: appleResult.nonce)
-                }
-                
-            case .failure(_):
-                print("error")
-            }
-        }
-    }
-}
+//    func signIn() async throws {
+//        signInApple.startSignInWithAppleFlow { result in
+//            switch result {
+//            case .success(let appleResult):
+//                Task {
+//                    try await signInWithApple(idToken: appleResult.idToken, nonce: appleResult.nonce)
+//                }
+//                
+//            case .failure(_):
+//                print("error")
+//            }
+//        }
+//    }
+//}
 
 struct LoginView: View {
-    @StateObject var viewModel = SignInViewModel()
+//    @StateObject var viewModel = SignInViewModel()
     @Binding var currentUser: User?
     
     var body: some View {

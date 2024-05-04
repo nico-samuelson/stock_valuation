@@ -12,7 +12,6 @@ import SwiftData
 struct ValifyApp: App {
     @State var isAuthenticated: Bool = false
     
-    
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
             Company.self,

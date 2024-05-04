@@ -25,8 +25,9 @@ struct HomeView: View {
                 Image(systemName: "clock.fill")
                 Text("History")
             }
-            //        }.onAppear{
-            //        }
+        }
+        .onAppear{
+            
         }
     }
     

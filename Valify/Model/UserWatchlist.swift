@@ -7,7 +7,8 @@
 
 import Foundation
 
-struct UserWatchlist {
+struct UserWatchlist: Codable {
     var id: UUID
+    var created_at: Date
     var watchlist_id: UUID
 }

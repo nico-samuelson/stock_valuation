@@ -14,14 +14,30 @@ struct HistoryView: View {
     @State var selectedWatchlist = "Watchlist 1"
     @State var selectedSegment = "Watchlist"
     @Query var companies: [Company]
+    @State var filteredCompanies: [Company] = []
     
     var body: some View {
         NavigationStack {
             List {
-                ForEach(companies, id:\.self) { company in
-                    StockList(company: company)
+                ForEach(filteredCompanies, id:\.self) { company in
+                    HistoryList(company: company)
                 }
                 .onDelete(perform: deleteItems)
+            }
+            .onAppear{
+                print(companies.count)
+                filteredCompanies = self.companies
+
+            }
+            .onChange(of: search) { searchVal in
+                if (searchVal != "") {
+                    filteredCompanies = self.companies.filter { company in
+                        company.name.lowercased().contains(search.lowercased()) || company.symbol.lowercased().contains(search.lowercased())
+                    }
+                }
+                else {
+                    filteredCompanies = self.companies
+                }
             }
             .listStyle(.plain)
             .listRowSpacing(10)
