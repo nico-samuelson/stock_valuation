@@ -17,7 +17,7 @@ struct StockView : View {
     @State var newWatchlistName: String = ""
     @State var addAlertShown: Bool = false
     @State var manageWlSheet: Bool = false
-    @State var profileSheet: Bool = false
+    @Binding var profileSheet: Bool
     
     func checkAuthentication() -> Bool {
         return currentUser != nil && isAuthenticated
@@ -193,14 +193,6 @@ struct StockView : View {
             }
             .frame(maxHeight: .infinity)
             .listStyle(.plain)
-            .onAppear{
-                if (isAuthenticated) {
-                    Task{
-                        try await fetchWatchlist()
-                        try await fetchWatchlistItem()
-                    }
-                }
-            }
             .onChange(of: selectedSegment) { value in
                 Task {
                     if (selectedSegment == "Watchlist") {
@@ -253,72 +245,16 @@ struct StockView : View {
                         try await fetchWatchlistItem()
                     }
                 }
+                else {
+                    watchlists = [Watchlist(id: UUID.init(), created_at: Date.now, user_id: UUID.init(), name: "Watchlist 1")]
+                    filtered = []
+                }
             }
             .navigationTitle("Stocks")
             .navigationBarTitleDisplayMode(.large)
             .searchable(text: $search, prompt: "Search stocks")
             .toolbar{
-                Button {
-                    profileSheet = true
-                } label: {
-                    Image(systemName: "person.crop.circle")
-                        .resizable()
-                        .frame(width: 28, height: 28)
-                        .aspectRatio(contentMode: .fit)
-                }
-                .sheet(isPresented: $profileSheet) {
-                    NavigationView {
-                        VStack(alignment: .leading) {
-                            HStack {
-                                ZStack {
-                                    Circle()
-                                        .frame(width: 64, height: 64)
-                                        .foregroundStyle(.secondary)
-                                    Text((isAuthenticated ? currentUser?.email?.prefix(1).uppercased() : "-") ?? "-")
-                                        .font(.title2)
-                                        .foregroundStyle(.white)
-                                }
-                                
-                                Text((isAuthenticated ? currentUser?.email : "You are not logged in") ?? "You are not logged in")
-                                    .padding(.leading, 8)
-                            }
-                            .padding(.top, 16)
-                            
-                            if(isAuthenticated) {
-                                Button(action: {
-                                    isAuthenticated = false
-                                    currentUser = nil
-//                                    selectedWatchlist = 
-                                    watchlists = [Watchlist(id: UUID.init(), created_at: Date.now, user_id: UUID.init(), name: "Watchlist 1")]
-                                    filtered = []
-                                    
-                                    if (isAuthenticated) {
-                                        Task {
-                                            try await fetchWatchlist()
-                                            try await fetchWatchlistItem()
-                                        }
-                                    }
-                                    
-                                }) {
-                                    Text("Log Out")
-                                        .frame(maxWidth: .infinity)
-                                        .padding(.vertical, 16)
-                                        .background(.secondary)
-                                        .foregroundStyle(.red)
-                                        .clipShape(RoundedRectangle(cornerRadius: 10))
-                                }
-                                .padding(.vertical, 16)
-                            }
-                            else {
-                                LoginButton(currentUser: $currentUser)
-                            }
-                        }
-                        .padding(.horizontal, 20)
-                        .navigationTitle("")
-                        .navigationBarTitleDisplayMode(.inline)
-                    }
-                    .presentationDetents([.fraction(0.25)])
-                }
+                ProfileButton(profileSheet: $profileSheet, isAuthenticated: $isAuthenticated, currentUser: $currentUser)
             }
         }
     }

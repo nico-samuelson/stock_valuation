@@ -11,18 +11,19 @@ import Auth
 struct HomeView: View {
     @Binding var isAuthenticated: Bool
     @Binding var currentUser: User?
+    @State var profileSheet: Bool = false
     
     var body: some View {
         TabView{
-            StockView(isAuthenticated: $isAuthenticated, currentUser: $currentUser).tabItem{
+            StockView(isAuthenticated: $isAuthenticated, currentUser: $currentUser, profileSheet: $profileSheet).tabItem{
                 Image(systemName: "chart.line.uptrend.xyaxis")
                 Text("Stocks")
             }
-            ValuationView().tabItem{
+            ValuationView(profileSheet: $profileSheet, isAuthenticated: $isAuthenticated, currentUser: $currentUser).tabItem{
                 Image(systemName: "dollarsign.circle.fill")
                 Text("Valuation")
             }
-            HistoryView().tabItem{
+            HistoryView(profileSheet: $profileSheet, isAuthenticated: $isAuthenticated, currentUser: $currentUser).tabItem{
                 Image(systemName: "clock.fill")
                 Text("History")
             }

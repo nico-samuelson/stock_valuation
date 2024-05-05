@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import Auth
 
 struct ResultView: View {
     @Environment(\.colorScheme) var colorScheme: ColorScheme
@@ -15,6 +16,9 @@ struct ResultView: View {
     @Binding var total: Double
     @Binding var current: Double
     @State var avgFV : Double = 0
+    @Binding var profileSheet: Bool
+    @Binding var isAuthenticated: Bool
+    @Binding var currentUser: User?
     
     var body: some View {
         VStack {
@@ -111,12 +115,12 @@ struct ResultView: View {
         }
         .navigationDestination(for: String.self) { value in
             switch(value) {
-            case "DCF": DCFView(viewModel: $viewModel, navPath: $navPath, tempNavPath: $tempNavPath, total: $total, current: $current)
-            case "PBV": PBVView(viewModel: $viewModel, navPath: $navPath, tempNavPath: $tempNavPath, total: $total, current: $current)
-            case "PER": PERView(viewModel: $viewModel, navPath: $navPath, tempNavPath: $tempNavPath, total: $total, current: $current)
-            case "EV/EBITDA": EvEbitdaView(viewModel: $viewModel, navPath: $navPath, tempNavPath: $tempNavPath, total: $total, current: $current)
-            case "Result": ResultView(viewModel: $viewModel, navPath: $navPath, tempNavPath: $tempNavPath, total: $total, current: $current)
-            default: ValuationView()
+            case "DCF": DCFView(viewModel: $viewModel, navPath: $navPath, tempNavPath: $tempNavPath, total: $total, current: $current, profileSheet: $profileSheet, isAuthenticated: $isAuthenticated, currentUser: $currentUser)
+            case "PBV": PBVView(viewModel: $viewModel, navPath: $navPath, tempNavPath: $tempNavPath, total: $total, current: $current, profileSheet: $profileSheet, isAuthenticated: $isAuthenticated, currentUser: $currentUser)
+            case "PER": PERView(viewModel: $viewModel, navPath: $navPath, tempNavPath: $tempNavPath, total: $total, current: $current, profileSheet: $profileSheet, isAuthenticated: $isAuthenticated, currentUser: $currentUser)
+            case "EV/EBITDA": EvEbitdaView(viewModel: $viewModel, navPath: $navPath, tempNavPath: $tempNavPath, total: $total, current: $current, profileSheet: $profileSheet, isAuthenticated: $isAuthenticated, currentUser: $currentUser)
+            case "Result": ResultView(viewModel: $viewModel, navPath: $navPath, tempNavPath: $tempNavPath, total: $total, current: $current, profileSheet: $profileSheet, isAuthenticated: $isAuthenticated, currentUser: $currentUser)
+            default: ValuationView(profileSheet: $profileSheet, isAuthenticated: $isAuthenticated, currentUser: $currentUser)
             }
         }
     }

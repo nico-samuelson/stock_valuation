@@ -45,6 +45,9 @@ struct ValuationView: View {
     @State var total: Double = 0
     @State var current: Double = 0
     @State var viewModel = FormViewModel()
+    @Binding var profileSheet: Bool
+    @Binding var isAuthenticated: Bool
+    @Binding var currentUser: User?
     
     var body: some View {
         NavigationStack(path: $navPath){
@@ -153,33 +156,16 @@ struct ValuationView: View {
             .navigationTitle("Valuation")
             .navigationBarTitleDisplayMode(.large)
             .toolbar{
-                Menu(content: {
-                    Section {
-                        Button(role:.destructive, action: {
-//                            currentUser = nil
-                        }) {
-                            Label("Logout", systemImage: "rectangle.portrait.and.arrow.forward")
-                        }
-                    }
-                }, label: {
-                    Button {
-                        
-                    } label: {
-                        Image(systemName: "person.crop.circle")
-                            .resizable()
-                            .frame(width: 28, height: 28)
-                            .aspectRatio(contentMode: .fit)
-                    }
-                })
+                ProfileButton(profileSheet: $profileSheet, isAuthenticated: $isAuthenticated, currentUser: $currentUser)
             }
             .navigationDestination(for: String.self) { value in
                 switch(value) {
-                case "DCF": DCFView(viewModel: $viewModel, navPath: $navPath, tempNavPath: $tempNavPath, total: $total, current: $current)
-                case "PBV": PBVView(viewModel: $viewModel, navPath: $navPath, tempNavPath: $tempNavPath, total: $total, current: $current)
-                case "PER": PERView(viewModel: $viewModel, navPath: $navPath, tempNavPath: $tempNavPath, total: $total, current: $current)
-                case "EV/EBITDA": EvEbitdaView(viewModel: $viewModel, navPath: $navPath, tempNavPath: $tempNavPath, total: $total, current: $current)
-                case "Result": ResultView(viewModel: $viewModel, navPath: $navPath, tempNavPath: $tempNavPath, total: $total, current: $current)
-                default: ValuationView()
+                case "DCF": DCFView(viewModel: $viewModel, navPath: $navPath, tempNavPath: $tempNavPath, total: $total, current: $current, profileSheet: $profileSheet, isAuthenticated: $isAuthenticated, currentUser: $currentUser)
+                case "PBV": PBVView(viewModel: $viewModel, navPath: $navPath, tempNavPath: $tempNavPath, total: $total, current: $current, profileSheet: $profileSheet, isAuthenticated: $isAuthenticated, currentUser: $currentUser)
+                case "PER": PERView(viewModel: $viewModel, navPath: $navPath, tempNavPath: $tempNavPath, total: $total, current: $current, profileSheet: $profileSheet, isAuthenticated: $isAuthenticated, currentUser: $currentUser)
+                case "EV/EBITDA": EvEbitdaView(viewModel: $viewModel, navPath: $navPath, tempNavPath: $tempNavPath, total: $total, current: $current, profileSheet: $profileSheet, isAuthenticated: $isAuthenticated, currentUser: $currentUser)
+                case "Result": ResultView(viewModel: $viewModel, navPath: $navPath, tempNavPath: $tempNavPath, total: $total, current: $current, profileSheet: $profileSheet, isAuthenticated: $isAuthenticated, currentUser: $currentUser)
+                default: ValuationView(profileSheet: $profileSheet, isAuthenticated: $isAuthenticated, currentUser: $currentUser)
                 }
             }
         }
@@ -199,10 +185,4 @@ struct ValuationView: View {
             }
         )
     }
-}
-
-
-
-#Preview {
-    ValuationView()
 }

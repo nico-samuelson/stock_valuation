@@ -7,6 +7,7 @@
 
 import SwiftUI
 import SwiftData
+import Auth
 
 struct HistoryView: View {
     @Environment(\.modelContext) var context
@@ -15,6 +16,9 @@ struct HistoryView: View {
     @State var selectedSegment = "Watchlist"
     @Query var companies: [Company]
     @State var filteredCompanies: [Company] = []
+    @Binding var profileSheet: Bool
+    @Binding var isAuthenticated: Bool
+    @Binding var currentUser: User?
     
     var body: some View {
         NavigationStack {
@@ -45,22 +49,7 @@ struct HistoryView: View {
             .navigationBarTitleDisplayMode(.large)
             .searchable(text: $search, prompt: "Search stocks")
             .toolbar{
-                Menu(content: {
-                    Section {
-                        Button(role:.destructive, action: {
-                            // logout
-                        }) {
-                            Label("Logout", systemImage: "rectangle.portrait.and.arrow.forward")
-                        }
-                    }
-                }, label: {
-                    Button {} label: {
-                        Image(systemName: "person.crop.circle")
-                            .resizable()
-                            .frame(width: 28, height: 28)
-                            .aspectRatio(contentMode: .fit)
-                    }
-                })
+                ProfileButton(profileSheet: $profileSheet, isAuthenticated: $isAuthenticated, currentUser: $currentUser)
             }
         }
     }
@@ -70,8 +59,4 @@ struct HistoryView: View {
             context.delete(companies[index])
         }
     }
-}
-
-#Preview {
-    HistoryView()
 }
