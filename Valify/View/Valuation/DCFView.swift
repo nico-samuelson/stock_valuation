@@ -121,7 +121,7 @@ struct DCFView: View {
                 let nextView = tempNavPath[(tempNavPath.firstIndex(of: navPath[navPath.count - 1]) ?? 0) + 1]
                 navPath.append(nextView)
                 
-                viewModel.company.dcf = viewModel.calculateDCF()
+                viewModel.company.dcf = calculateDCF(company: viewModel.company, financialHistory: viewModel.financialHistory, bondYield: viewModel.bondYield, indexYield: viewModel.indexYield)
                 if (nextView == "Result") {
                     context.insert(viewModel.company)
                 }

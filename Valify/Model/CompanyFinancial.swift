@@ -30,10 +30,16 @@ class CompanyFinancial: Codable, Identifiable {
     var depreciationAmortization: Double = 0
     
     required init(from decoder: Decoder) throws {
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy-MM-DD"
+        
+        
         let container = try decoder.container(keyedBy: CodingKeys.self)
+        let dateString = try container.decode(String.self, forKey: .date)
         id = try container.decode(UUID.self, forKey: .id)
+        created_at = try container.decode(Date.self, forKey: .created_at)
         company_id = try container.decode(UUID.self, forKey: .company_id)
-        date = try container.decode(Date.self, forKey: .date)
+        date = dateFormatter.date(from: dateString) ?? Date.now
         price = try container.decode(Double.self, forKey: .price)
         revenue = try container.decode(Double.self, forKey: .revenue)
         interestExpense = try container.decode(Double.self, forKey: .interestExpense)

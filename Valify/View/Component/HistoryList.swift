@@ -9,6 +9,7 @@ import SwiftUI
 
 struct HistoryList: View {
     @Environment(\.modelContext) var context
+    @State var showCompanyDetail: Bool = false
     let company: Company
     
     init(company: Company) {
@@ -47,6 +48,12 @@ struct HistoryList: View {
                     .padding(.bottom, 1)
             }
             .padding(.vertical, 8)
+        }
+        .onTapGesture {
+            showCompanyDetail = true
+        }
+        .sheet(isPresented: $showCompanyDetail) {
+            CompanyDetailSheet(company: company)
         }
     }
 }

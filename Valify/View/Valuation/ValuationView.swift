@@ -25,7 +25,6 @@ enum Method: String, CaseIterable, Equatable {
 
 struct ValuationView: View {
     @Environment(\.colorScheme) var colorScheme: ColorScheme
-//    @Binding var currentUser: User?
     
     let sectors: [String] = [
         "Basic Materials",
@@ -102,7 +101,7 @@ struct ValuationView: View {
                     }
                     
                     Section(header: Text("Duration")) {
-                        Stepper("\(viewModel.duration)" + (viewModel.duration > 1 ? " Years" : " Year"), value: $viewModel.duration, in: 1...5)
+                        Stepper("\(viewModel.duration)" + (viewModel.duration > 1 ? " Years" : " Year"), value: $viewModel.duration, in: 2...5)
                             .onChange(of: viewModel.duration) { value in
                                 if value > viewModel.financialHistory.count {
                                     viewModel.financialHistory.append(CompanyFinancial())

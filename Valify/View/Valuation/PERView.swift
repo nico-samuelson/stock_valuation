@@ -66,7 +66,7 @@ struct PERView: View {
                 let nextView = tempNavPath[(tempNavPath.firstIndex(of: navPath[navPath.count - 1]) ?? 0) + 1]
                 navPath.append(nextView)
                 
-                viewModel.company.per = viewModel.calculatePER()
+                viewModel.company.per = calculatePER(company: viewModel.company, financialHistory: viewModel.financialHistory)
                 if (nextView == "Result") {
                     context.insert(viewModel.company)
                 }

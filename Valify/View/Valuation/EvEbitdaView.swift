@@ -89,7 +89,7 @@ struct EvEbitdaView: View {
                     let nextView = tempNavPath[(tempNavPath.firstIndex(of: navPath[navPath.count - 1]) ?? 0) + 1]
                     navPath.append(nextView)
                     
-                    viewModel.company.evEbitda = viewModel.calculateEVEBITDA()
+                    viewModel.company.evEbitda = calculateEVEBITDA(company: viewModel.company, financialHistory: viewModel.financialHistory)
                     if (nextView == "Result") {
                         context.insert(viewModel.company)
                     }

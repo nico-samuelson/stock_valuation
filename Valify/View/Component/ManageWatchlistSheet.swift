@@ -22,6 +22,8 @@ struct ManageWatchlistSheet: View {
                     .delete()
                     .eq("id", value: watchlists[index].id)
                     .execute()
+                
+                watchlists.remove(at: index)
             }
             catch {
                 print(error)
@@ -37,8 +39,11 @@ struct ManageWatchlistSheet: View {
                 .eq("id", value: editedWl)
                 .execute()
             
-            
-            watchlists.filter{$0.id == editedWl}[0].name = updatedName
+            let edited = watchlists.firstIndex(where: {$0.id == editedWl}) ?? -1
+            if (edited != -1) {
+                watchlists[edited].name = updatedName
+            }
+            dismiss()
         }
         catch {
             print(error)

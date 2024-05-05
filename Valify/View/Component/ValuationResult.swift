@@ -16,12 +16,13 @@ struct ValuationResult: View {
         self.method = method
         self.fairValue = fairValue
         self.marginOfSafety = marginOfSafety
+        print(marginOfSafety)
     }
     
     var body: some View {
         VStack(alignment: .leading) {
             Text(method)
-                .font(.title2)
+                .font(.title3)
                 .fontWeight(.bold)
                 .padding(.bottom, 8)
             

@@ -9,27 +9,7 @@ import SwiftUI
 import AuthenticationServices
 import Auth
 
-//class SignInViewModel: ObservableObject {
-    
-//    let signInApple = SignInApple()
-    
-//    func signIn() async throws {
-//        signInApple.startSignInWithAppleFlow { result in
-//            switch result {
-//            case .success(let appleResult):
-//                Task {
-//                    try await signInWithApple(idToken: appleResult.idToken, nonce: appleResult.nonce)
-//                }
-//                
-//            case .failure(_):
-//                print("error")
-//            }
-//        }
-//    }
-//}
-
-struct LoginView: View {
-//    @StateObject var viewModel = SignInViewModel()
+struct LoginButton: View {
     @Binding var currentUser: User?
     
     var body: some View {
@@ -61,7 +41,7 @@ struct LoginView: View {
                 }
             }
         }
-        .fixedSize()
+        .frame(maxWidth: .infinity, maxHeight: 48)
     }
 }
 

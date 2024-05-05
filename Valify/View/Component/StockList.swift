@@ -9,15 +9,16 @@ struct StockList: View {
     @Binding var watchlists: [Watchlist]
     @State var addToWatchlistSheet: Bool = false
     @State var savedWatchlist: [Watchlist] = []
+    @State var showCompanyDetail: Bool = false
     
-    func insertItem() async throws {
+    func insertItem(company: Company) async throws {
         do {
             for wl in savedWatchlist {
                 let newItem = WatchlistItem(
                     id: UUID.init(),
                     created_at: Date.now,
                     watchlist_id: wl.id,
-                    company_id: self.company.id
+                    company_id: company.id
                 )
                 try await supabase.database.from("WatchlistItem").insert(newItem).execute()
             }
@@ -42,17 +43,15 @@ struct StockList: View {
     }
     
     var body: some View {
-        HStack(){
-            if (self.company.logo != "") {
-                AsyncImage(url: URL(string: self.company.logo)) { image in
-                    image.resizable().aspectRatio(contentMode: .fit)
-                }
+        HStack{
+            AsyncImage(url: URL(string: self.company.logo)) { image in
+                image.resizable().aspectRatio(contentMode: .fit)
+            }
             placeholder: {
-                Circle().foregroundColor(.secondary)
+                ProgressView()
             }
             .frame(width: 48, height: 48)
             .cornerRadius(50)
-            }
             
             VStack(alignment: .leading) {
                 Text(self.company.symbol)
@@ -63,7 +62,7 @@ struct StockList: View {
                     .lineLimit(1)
                     .fixedSize()
                     .truncationMode(.tail)
-            }
+            }.padding(.leading, 8)
             
             Spacer(minLength: 20)
             
@@ -72,45 +71,33 @@ struct StockList: View {
                     .fontWeight(/*@START_MENU_TOKEN@*/.bold/*@END_MENU_TOKEN@*/)
                     .padding(.bottom, 1)
                 Text("\(String(format:"%.02f", self.company.changes))%")
-                    .foregroundStyle(.green)
+                    .foregroundStyle(self.company.changes >= 0 ? .green : .red)
             }
             .padding(.vertical, 8)
         }
-        .swipeActions(edge: .trailing, content: {
-//            Save Item
-            if (selectedSegment == "All Stock") {
-                Button{
-                    addToWatchlistSheet = true
-//                    Task {
-//                        try await insertItem(company: company)
-//                    }
-                } label: {
-                    Image(systemName: "bookmark.fill")
-                }
-            }
-//            Remove Item
-            else {
-                Button(role: .destructive) {
-                    Task {
-                        try await removeItem(company: company)
-                    }
-                } label: {
-                    Image(systemName: "trash.fill")
-                }
-            }
-        })
+        .onTapGesture {
+            showCompanyDetail = true
+        }
+        .sheet(isPresented: $showCompanyDetail) {
+            CompanyDetailSheet(company: company)
+        }
         .sheet(isPresented: $addToWatchlistSheet) {
             NavigationView {
                 List {
                     ForEach(watchlists, id:\.id) { wl in
                         LabeledContent {
                             Button{
-                                let wlIndex = savedWatchlist.firstIndex(where: {$0.id == wl.id}) ?? -1
-                                if (wlIndex != -1) {
-                                    savedWatchlist.removeAll(where: {$0.id == wl.id})
-                                }
-                                else {
-                                    savedWatchlist.append(wl)
+                                Task {
+                                    let wlIndex = savedWatchlist.firstIndex(where: {$0.id == wl.id}) ?? -1
+                                    if (wlIndex != -1) {
+                                        savedWatchlist.removeAll(where: {$0.id == wl.id})
+                                        try await removeItem(company: company)
+                                    }
+                                    else {
+                                        savedWatchlist.append(wl)
+                                        try await insertItem(company: self.company)
+                                    }
+                                    
                                 }
                             } label: {
                                 Image(systemName: savedWatchlist.firstIndex(where: {$0.id == wl.id}) ?? -1 == -1 ? "plus" : "minus.circle").foregroundColor(savedWatchlist.firstIndex(where: {$0.id == wl.id}) ?? -1 == -1 ? .blue : .red)
@@ -124,10 +111,8 @@ struct StockList: View {
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
                     ToolbarItem(placement: .topBarTrailing, content: {
-                        Button{
-                            Task {
-                                try await insertItem()
-                            }
+                        Button {
+                            addToWatchlistSheet = false
                         } label: {
                             Text("Done")
                         }
@@ -136,5 +121,26 @@ struct StockList: View {
             }
             .presentationDetents([.medium, .large])
         }
+//        .swipe
+        .swipeActions(edge: .trailing, allowsFullSwipe: true, content: {
+            //            Save Item
+            if (selectedSegment == "All Stock") {
+                Button{
+                    addToWatchlistSheet = true
+                } label: {
+                    Image(systemName: "bookmark.fill")
+                }
+            }
+            //            Remove Item
+            else {
+                Button(role: .destructive) {
+                    Task {
+                        try await removeItem(company: company)
+                    }
+                } label: {
+                    Image(systemName: "trash.fill")
+                }
+            }
+        })
     }
 }

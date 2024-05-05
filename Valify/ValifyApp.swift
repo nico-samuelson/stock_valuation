@@ -7,10 +7,12 @@
 
 import SwiftUI
 import SwiftData
+import Auth
 
 @main
 struct ValifyApp: App {
     @State var isAuthenticated: Bool = false
+    @State var currentUser: User?
     
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
@@ -29,18 +31,24 @@ struct ValifyApp: App {
     var body: some Scene {
         WindowGroup {
             Group{
-                ContentView()
+                ContentView(isAuthenticated: $isAuthenticated, currentUser: $currentUser)
 
             }.task {
+                Task {
+                    isAuthenticated = try await supabaseAuth.session.user != nil
+                    currentUser = try await supabaseAuth.session.user
+                    
+                    print(isAuthenticated)
+                }
+                
                 for await state in supabaseAuth.authStateChanges {
                     if [.initialSession, .signedIn, .signedOut].contains(state.event) {
                         isAuthenticated = state.session != nil
+                        currentUser = state.session?.user
                     }
                 }
             }
         }
         .modelContainer(sharedModelContainer)
-        //        .modelContainer(for: [Company.self, CompanyFinancial.self], inMemory: false, isAutosaveEnabled: false, isUndoEnabled: true)
-        
     }
 }

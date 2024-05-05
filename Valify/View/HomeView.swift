@@ -9,11 +9,12 @@ import SwiftUI
 import Auth
 
 struct HomeView: View {
+    @Binding var isAuthenticated: Bool
     @Binding var currentUser: User?
     
     var body: some View {
         TabView{
-            StockView(currentUser: $currentUser).tabItem{
+            StockView(isAuthenticated: $isAuthenticated, currentUser: $currentUser).tabItem{
                 Image(systemName: "chart.line.uptrend.xyaxis")
                 Text("Stocks")
             }

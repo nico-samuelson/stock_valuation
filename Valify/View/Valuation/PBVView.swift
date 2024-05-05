@@ -66,7 +66,7 @@ struct PBVView: View {
                     let nextView = tempNavPath[(tempNavPath.firstIndex(of: navPath[navPath.count - 1]) ?? 0) + 1]
                     navPath.append(nextView)
                     
-                    viewModel.company.pbv = viewModel.calculatePBV()
+                    viewModel.company.pbv = calculatePBV(company: viewModel.company, financialHistory: viewModel.financialHistory)
                     if (nextView == "Result") {
                         context.insert(viewModel.company)
                     }

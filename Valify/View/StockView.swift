@@ -1,66 +1,77 @@
 import SwiftUI
 import Auth
 
+
 struct StockView : View {
     @Environment (\.dismiss) var dismiss
+    @Binding var isAuthenticated: Bool
+    @Binding var currentUser: User?
+    
     @State var search: String = ""
     @State var selectedWatchlist: String = ""
     @State var selectedSegment: String = "Watchlist"
-    @Binding var currentUser: User?
-    @State var companies: [Company] = []
+    
     @State var filtered: [Company] = []
     @State var watchlists: [Watchlist] = []
-    @State var items: [WatchlistItem] = []
-    @State var addAlertShown: Bool = false
+    
     @State var newWatchlistName: String = ""
+    @State var addAlertShown: Bool = false
     @State var manageWlSheet: Bool = false
-    @State var currentCompany: Company = Company()
+    @State var profileSheet: Bool = false
+    
+    func checkAuthentication() -> Bool {
+        return currentUser != nil && isAuthenticated
+    }
     
     func fetchWatchlist() async throws {
-        do {
-            watchlists = try await supabase.database
-                .from("Watchlist")
-                .select()
-                .match(["user_id": currentUser?.id])
-                .execute()
-                .value
-            selectedWatchlist = watchlists[1].name
-            print(watchlists)
-            
-        }
-        catch {
-            print(error)
+        if (checkAuthentication()) {
+            do {
+                watchlists = try await supabase.database
+                    .from("Watchlist")
+                    .select()
+                    .match(["user_id": supabase.auth.session.user.id])
+                    .execute()
+                    .value
+                selectedWatchlist = watchlists[0].name
+                
+            }
+            catch {
+                print("error fetching")
+                print("error: ", error)
+            }
         }
     }
     
     func fetchWatchlistItem() async throws {
-        do {
-            companies = try await supabase.rpc("fetch_watchlist_items", params: ["watchlist_name": selectedWatchlist])
-                .execute()
-                .value
-            
-            print(items)
-            
-            filtered = companies
-        }
-        catch {
-            print(error)
+        if (checkAuthentication()) {
+            do {
+                filtered = try await supabase
+                    .rpc("fetch_watchlist_items", params: ["watchlist_name": selectedWatchlist])
+                    .execute()
+                    .value
+            }
+            catch {
+                print("error fetching")
+                print(error)
+            }
         }
     }
     
     func searchItem() async throws {
-        let watchlist = watchlists.filter{ $0.name == selectedWatchlist }
-        do {
-            filtered = try await supabase.rpc("search_company", params: [
-                "watchlist": watchlist.count > 0 ? watchlist[0].id.uuidString : UUID.init().uuidString,
-                "value": search.lowercased() != "" ? search.lowercased() : "*",
-                "segment": selectedSegment
-            ])
-            .execute()
-            .value
-        }
-        catch {
-            print(error)
+        if (search != "") {
+            let watchlist = watchlists.filter{ $0.name == selectedWatchlist }
+            do {
+                filtered = try await supabase.rpc("search_company", params: [
+                    "watchlist": watchlist.count > 0 ? watchlist[0].id.uuidString : UUID.init().uuidString,
+                    "value": search.lowercased() != "" ? search.lowercased() : "*",
+                    "segment": selectedSegment
+                ])
+                .execute()
+                .value
+            }
+            catch {
+                print(error)
+            }
         }
     }
     
@@ -78,19 +89,21 @@ struct StockView : View {
     }
     
     func addWatchlist() async throws {
-        do {
-            let watchlist = Watchlist(
-                id: UUID.init(),
-                created_at: Date.now,
-                user_id: currentUser?.id ?? UUID.init(),
-                name: newWatchlistName
-            )
-            try await supabase.database.from("Watchlist").insert(watchlist).execute()
-            
-            watchlists.append(watchlist)
-        }
-        catch {
-            print(error)
+        if (checkAuthentication()) {
+            do {
+                let watchlist = try await Watchlist(
+                    id: UUID.init(),
+                    created_at: Date.now,
+                    user_id: supabase.auth.session.user.id,
+                    name: newWatchlistName
+                )
+                try await supabase.database.from("Watchlist").insert(watchlist).execute()
+                
+                watchlists.append(watchlist)
+            }
+            catch {
+                print(error)
+            }
         }
     }
     
@@ -103,16 +116,6 @@ struct StockView : View {
                 }
                 .pickerStyle(SegmentedPickerStyle())
                 .listRowSeparator(.hidden)
-                .onChange(of: selectedSegment) { value in
-                    Task {
-                        if (selectedSegment == "Watchlist") {
-                            try await fetchWatchlistItem()
-                        }
-                        else {
-                            try await fetchAllCompany()
-                        }
-                    }
-                }
                 
                 HStack(alignment: .center){
                     if (selectedSegment == "Watchlist") {
@@ -122,20 +125,6 @@ struct StockView : View {
                             }
                             Label("Manage Watchlist", systemImage: "slider.horizontal.3").tag("Manage Watchlist")
                             Label("Add Watchlist", systemImage: "plus").tag("Add Watchlist")
-                        }
-                        .onChange(of: selectedWatchlist) { value in
-                            if (selectedWatchlist == "Add Watchlist") {
-                                addAlertShown = true
-                            }
-                            else if (selectedWatchlist == "Manage Watchlist") {
-                                manageWlSheet = true
-                                selectedWatchlist = "Watchlist 1"
-                            }
-                            else {
-                                Task {
-                                    try await fetchWatchlistItem()
-                                }
-                            }
                         }
                         .sheet(isPresented: $manageWlSheet) {
                             ManageWatchlistSheet(watchlists: $watchlists)
@@ -160,7 +149,22 @@ struct StockView : View {
                 }
                 
                 if (filtered.count == 0) {
-                    HStack(alignment: .center) {
+                    if (search != "") {
+                        ContentUnavailableView.search.listRowSeparator(.hidden)
+                    }
+                    else if (!isAuthenticated) {
+                        ContentUnavailableView {
+                            Label("You are logged out", systemImage: "key.slash.fill")
+                        } description: {
+                            Button{
+                                profileSheet = true
+                            } label: {
+                                Text("Log in here").foregroundStyle(.blue)
+                            }
+                        }
+                        .listRowSeparator(.hidden)
+                    }
+                    else {
                         ContentUnavailableView {
                             Label("No Stock Yet", systemImage: "dollarsign.circle.fill")
                         } description: {
@@ -169,61 +173,153 @@ struct StockView : View {
                                     selectedSegment = "All Stock"
                                 }
                             } label: {
-                                Text("Add Stock").foregroundStyle(.blue)
+                                Text("Browse Stocks").foregroundStyle(.blue)
                             }
                         }
+                        .listRowSeparator(.hidden)
                     }
+                    
                 }
                 else {
                     ForEach(filtered, id:\.id) { company in
-                        StockList(company: company, selectedSegment: $selectedSegment, selectedWatchlist: $selectedWatchlist, watchlists: $watchlists)
+                        StockList(
+                            company: company,
+                            selectedSegment: $selectedSegment,
+                            selectedWatchlist: $selectedWatchlist,
+                            watchlists: $watchlists
+                        )
                     }
                 }
             }
+            .frame(maxHeight: .infinity)
             .listStyle(.plain)
             .onAppear{
-                Task{
-                    try await fetchWatchlist()
-                    try await fetchWatchlistItem()
+                if (isAuthenticated) {
+                    Task{
+                        try await fetchWatchlist()
+                        try await fetchWatchlistItem()
+                    }
+                }
+            }
+            .onChange(of: selectedSegment) { value in
+                Task {
+                    if (selectedSegment == "Watchlist") {
+                        if (isAuthenticated) {
+                            try await fetchWatchlistItem()
+                            try await searchItem()
+                        }
+                        else {
+                            filtered = []
+                        }
+                    }
+                    else {
+                        try await fetchAllCompany()
+                        try await searchItem()
+                    }
+                }
+            }
+            .onChange(of: selectedWatchlist) { value in
+                if (selectedWatchlist == "Add Watchlist") {
+                    addAlertShown = true
+                }
+                else if (selectedWatchlist == "Manage Watchlist") {
+                    manageWlSheet = true
+                    selectedWatchlist = watchlists[0].name
+                }
+                else {
+                    Task {
+                        try await fetchWatchlistItem()
+                        try await searchItem()
+                    }
                 }
             }
             .onChange(of: search) { value in
                 Task {
-//                    if (search != "") {
+                    if (search != "") {
                         try await searchItem()
-//                    }
-//                    else {
-//                        
-//                    }
+                    }
+                    else if (selectedSegment == "Watchlist") {
+                        try await fetchWatchlistItem()
+                    }
+                    else {
+                        try await fetchAllCompany()
+                    }
+                }
+            }
+            .onChange(of: isAuthenticated) { value in
+                if (isAuthenticated) {
+                    Task{
+                        try await fetchWatchlist()
+                        try await fetchWatchlistItem()
+                    }
                 }
             }
             .navigationTitle("Stocks")
             .navigationBarTitleDisplayMode(.large)
             .searchable(text: $search, prompt: "Search stocks")
             .toolbar{
-                Menu(content: {
-                    Section {
-                        Button(role:.destructive, action: {
-                            currentUser = nil
-                        }) {
-                            Label("Logout", systemImage: "rectangle.portrait.and.arrow.forward")
+                Button {
+                    profileSheet = true
+                } label: {
+                    Image(systemName: "person.crop.circle")
+                        .resizable()
+                        .frame(width: 28, height: 28)
+                        .aspectRatio(contentMode: .fit)
+                }
+                .sheet(isPresented: $profileSheet) {
+                    NavigationView {
+                        VStack(alignment: .leading) {
+                            HStack {
+                                ZStack {
+                                    Circle()
+                                        .frame(width: 64, height: 64)
+                                        .foregroundStyle(.secondary)
+                                    Text((isAuthenticated ? currentUser?.email?.prefix(1).uppercased() : "-") ?? "-")
+                                        .font(.title2)
+                                        .foregroundStyle(.white)
+                                }
+                                
+                                Text((isAuthenticated ? currentUser?.email : "You are not logged in") ?? "You are not logged in")
+                                    .padding(.leading, 8)
+                            }
+                            .padding(.top, 16)
+                            
+                            if(isAuthenticated) {
+                                Button(action: {
+                                    isAuthenticated = false
+                                    currentUser = nil
+//                                    selectedWatchlist = 
+                                    watchlists = [Watchlist(id: UUID.init(), created_at: Date.now, user_id: UUID.init(), name: "Watchlist 1")]
+                                    filtered = []
+                                    
+                                    if (isAuthenticated) {
+                                        Task {
+                                            try await fetchWatchlist()
+                                            try await fetchWatchlistItem()
+                                        }
+                                    }
+                                    
+                                }) {
+                                    Text("Log Out")
+                                        .frame(maxWidth: .infinity)
+                                        .padding(.vertical, 16)
+                                        .background(.secondary)
+                                        .foregroundStyle(.red)
+                                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                                }
+                                .padding(.vertical, 16)
+                            }
+                            else {
+                                LoginButton(currentUser: $currentUser)
+                            }
                         }
+                        .padding(.horizontal, 20)
+                        .navigationTitle("")
+                        .navigationBarTitleDisplayMode(.inline)
                     }
-                }, label: {
-                    Button {} label: {
-                        Image(systemName: "person.crop.circle")
-                            .resizable()
-                            .frame(width: 28, height: 28)
-                            .aspectRatio(contentMode: .fit)
-                    }
-                })
+                    .presentationDetents([.fraction(0.25)])
+                }
             }
         }
     }
 }
-
-
-//#Preview {
-//    StockView()
-//        .modelContainer(for: Item.self, inMemory: true)
-//}
